@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ABS Fitness</title>
+  <link rel="stylesheet" href="css/homepage.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="logo">ABS Fitness</div>
+    <div class="nav-links">
+      <a href="login.html">Login</a>
+      <a href="register.html">Sign Up</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Transform Your Body, Transform Your Life</h1>
+      <p>Your fitness journey starts here</p>
+    </div>
+  </section>
+
+  <!-- Motivational Quote -->
+  <section class="quote-box" id="quote">
+    Loading motivational quote...
+  </section>
+
+  <!-- Features -->
+  <section class="cards">
+    <div class="card">
+      <h3>Track Workouts</h3>
+      <p>Monitor your exercise, calories, and goals.</p>
+    </div>
+    <div class="card">
+      <h3>Set Fitness Goals</h3>
+      <p>Plan your objectives and chase consistency.</p>
+    </div>
+    <div class="card">
+      <h3>Stay Motivated</h3>
+      <p>Get daily encouragement and personal insights.</p>
+    </div>
+  </section>
+
+  <footer>
+    &copy; 2025 ABS Fitness. Built with passion and sweat 💪
+  </footer>
+
+  <script>
+    async function loadQuote() {
+      try {
+        const res = await fetch('http://localhost:5000/quotes');
+        const data = await res.json();
+        document.getElementById('quote').innerText = `"${data.slip.advice}"`;
+      } catch {
+        document.getElementById('quote').innerText = "Push harder than yesterday if you want a different tomorrow.";
+      }
+    }
+    loadQuote();
+  </script>
+</body>
+</html>

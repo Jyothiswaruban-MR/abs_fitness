@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | ABS Fitness</title>
+  <link rel="stylesheet" href="css/register.css" />
+</head>
+<body>
+
+  <div class="signup-container">
+    <div class="form-box">
+      <h2>Create Your Account</h2>
+      <p class="subtitle">Join ABS Fitness and begin your transformation</p>
+
+      <form id="registerForm" novalidate>
+        <input type="text" id="firstName" placeholder="First Name" required />
+        <input type="text" id="lastName" placeholder="Last Name" required />
+        <input type="text" id="username" placeholder="Username" required />
+
+        <div class="phone-group">
+          <select id="countryCode" required>
+            <option value="+91" selected>🇮🇳 +91 (India)</option>
+            <option value="+353">🇮🇪 +353 (Ireland)</option>
+            <option value="+1">🇺🇸 +1 (USA)</option>
+            <option value="+44">🇬🇧 +44 (UK)</option>
+            <option value="+61">🇦🇺 +61 (Australia)</option>
+            <option value="+81">🇯🇵 +81 (Japan)</option>
+            <option value="+49">🇩🇪 +49 (Germany)</option>
+            <option value="+971">🇦🇪 +971 (UAE)</option>
+            <option value="+880">🇧🇩 +880 (Bangladesh)</option>
+            <option value="+94">🇱🇰 +94 (Sri Lanka)</option>
+            <option value="+86">🇨🇳 +86 (China)</option>
+          </select>
+          <input type="tel" id="phone" placeholder="Phone Number" pattern="[0-9]{7,15}" required />
+        </div>
+
+        <select id="gender" required>
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <input type="number" id="age" placeholder="Age" required min="10" max="100" />
+        <input type="number" id="height" placeholder="Height (cm)" required />
+        <input type="number" id="weight" placeholder="Weight (kg)" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required minlength="6" />
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+
+        <button type="submit">Sign Up</button>
+      </form>
+
+      <p class="footer-link">Already have an account? <a href="login.html">Login</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const phone = document.getElementById("phone");
+      if (!phone.checkValidity()) {
+        alert("Please enter a valid phone number.");
+        return;
+      }
+
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        return;
+      }
+
+      const data = {
+        firstName: document.getElementById("firstName").value.trim(),
+        lastName: document.getElementById("lastName").value.trim(),
+        username: document.getElementById("username").value.trim(),
+        phone: document.getElementById("countryCode").value + document.getElementById("phone").value.trim(),
+        gender: document.getElementById("gender").value,
+        age: parseInt(document.getElementById("age").value),
+        height_cm: parseFloat(document.getElementById("height").value),
+        weight_kg: parseFloat(document.getElementById("weight").value),
+        email: document.getElementById("email").value.trim(),
+        password
+      };
+
+      try {
+        const res = await fetch("http://localhost:5000/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert("Registration successful!");
+          window.location.href = "login.html";
+        } else {
+          alert(result.message || "Registration failed.");
+        }
+      } catch (err) {
+        alert("Server error. Try again later.");
+      }
+    });
+  </script>
+
+</body>
+</html>

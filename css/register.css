@@ -1,0 +1,142 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body, html {
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #1e2a78, #3e8ed0);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: 100% 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+  }
+  
+  .signup-container {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 2.5rem;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.25);
+    max-width: 500px;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .form-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .form-box h2 {
+    color: #ffffff;
+    font-size: 1.6rem;
+    margin-bottom: 0.3rem;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .subtitle {
+    font-size: 0.95rem;
+    color: #dddddd;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    width: 100%;
+  }
+  
+  form {
+    width: 100%;
+  }
+  
+  form input, form select {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    background: #ffffff;
+  }
+  
+  .phone-group {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  
+  .phone-group select {
+    width: 35%;
+    background: #ffffff;
+  }
+  
+  .phone-group input {
+    width: 65%;
+  }
+  
+  form button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: #00ffd5;
+    color: #000;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  form button:hover {
+    background: #00e6c1;
+  }
+  
+  .footer-link {
+    color: #eee;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .footer-link a {
+    color: #00ffd5;
+    text-decoration: none;
+    margin-left: 5px;
+  }
+  
+  .footer-link a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Mobile */
+  @media (max-width: 480px) {
+    .signup-container {
+      padding: 2rem 1.5rem;
+    }
+  
+    .form-box h2 {
+      font-size: 1.4rem;
+    }
+  
+    form input, form button {
+      font-size: 1rem;
+    }
+  
+    .phone-group {
+      flex-direction: column;
+    }
+  
+    .phone-group select,
+    .phone-group input {
+      width: 100%;
+    }
+  }  

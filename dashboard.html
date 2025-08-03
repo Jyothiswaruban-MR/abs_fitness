@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard | ABS Fitness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">ABS Fitness</div>
+    <div class="nav-right">
+      <div class="user-welcome" id="welcomeUser">Welcome, User</div>
+      <img id="profileIcon" src="images/user.png" alt="Profile" title="Profile" />
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="dashboard-container">
+
+    <div class="summary-section">
+      <div class="card" id="totalWorkouts">Total Workouts: 0</div>
+      <div class="card" id="totalCalories">Total Calories: 0</div>
+      <div class="card" id="activeGoals">Active Goals: 0</div>
+    </div>
+
+    <div class="chart-section">
+      <canvas id="progressChart"></canvas>
+    </div>
+
+    <div class="goals-section">
+      <h2>Upcoming Goals</h2>
+      <ul id="goalsList"></ul>
+    </div>
+
+    <div class="quote-section">
+      <h2>Today's Motivation</h2>
+      <p id="quoteText">Loading...</p>
+    </div>
+
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
