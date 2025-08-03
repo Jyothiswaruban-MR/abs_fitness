@@ -6,6 +6,7 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Log activity via stored procedure
 async function logActivity(
   userId,
   activityType,
@@ -26,17 +27,13 @@ async function logActivity(
       .input('activityDescription', sql.VarChar(100), activityDescription)
       .input('activityTimestamp', sql.DateTime, new Date())
       .input('ipAddress', sql.VarChar(60), ipAddress)
-      .query(`
-        INSERT INTO userActivity 
-        (userId, token, tokenType, tokenExpiry, activityType, activityDescription, activityTimestamp, ipAddress)
-        VALUES (@userId, @token, @tokenType, @tokenExpiry, @activityType, @activityDescription, @activityTimestamp, @ipAddress)
-      `);
+      .execute('sp_LogUserActivity');
   } catch (err) {
     console.error('Failed to log activity:', err);
   }
 }
 
-//REGISTER ROUTE
+// REGISTER ROUTE
 router.post('/register', async (req, res) => {
   const { username, email, age, password } = req.body;
   if (!username || !email || !age || !password) {
@@ -46,41 +43,36 @@ router.post('/register', async (req, res) => {
   try {
     const pool = await getConnection();
 
-    const existingUser = await pool.request()
-      .input('email', sql.VarChar(50), email)
-      .query('SELECT * FROM users WHERE email = @email');
-
-    if (existingUser.recordset.length > 0) {
-      return res.status(409).json({ message: 'Email already registered' });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const insertResult = await pool.request()
+    const result = await pool.request()
       .input('username', sql.VarChar(50), username)
       .input('email', sql.VarChar(50), email)
       .input('age', sql.Int, age)
       .input('password', sql.VarChar(255), hashedPassword)
-      .query(`
-        INSERT INTO users (username, email, age, password)
-        VALUES (@username, @email, @age, @password);
-        SELECT SCOPE_IDENTITY() AS userId;
-      `);
+      .output('userId', sql.Int)
+      .execute('sp_RegisterUser');
 
-    const userId = insertResult.recordset[0].userId;
+    const userId = result.output.userId;
+    if (!userId) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
 
     await logActivity(userId, 'Registration', 'User registered');
 
     res.status(201).json({ message: 'User registered successfully' });
 
   } catch (err) {
+    if (err.message.includes('Email already exists')) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
+
     console.error(err);
     res.status(500).json({ message: 'Server error during registration' });
   }
 });
 
-
-//LOGIN ROUTE
+// LOGIN ROUTE
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
@@ -88,21 +80,19 @@ router.post('/login', async (req, res) => {
   try {
     const pool = await getConnection();
 
-    const userResult = await pool.request()
+    const result = await pool.request()
       .input('email', sql.VarChar(50), email)
-      .query('SELECT * FROM users WHERE email = @email');
+      .execute('sp_AuthenticateUser');
 
-    const user = userResult.recordset[0];
+    const user = result.recordset[0];
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
 
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
-
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
     await logActivity(
       user.id,
@@ -121,7 +111,5 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error during login' });
   }
 });
-
-
 
 module.exports = router;

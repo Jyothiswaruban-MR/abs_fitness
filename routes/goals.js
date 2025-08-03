@@ -15,17 +15,13 @@ async function logActivity(userId, activityType, activityDescription) {
       .input('activityDescription', sql.VarChar(100), activityDescription)
       .input('activityTimestamp', sql.DateTime, new Date())
       .input('ipAddress', sql.VarChar(60), '')
-      .query(`
-        INSERT INTO userActivity 
-        (userId, token, tokenType, tokenExpiry, activityType, activityDescription, activityTimestamp, ipAddress)
-        VALUES (@userId, @token, @tokenType, @tokenExpiry, @activityType, @activityDescription, @activityTimestamp, @ipAddress)
-      `);
+      .execute('sp_LogUserActivity');
   } catch (err) {
     console.error('Activity log failed:', err);
   }
 }
 
-// add a goal
+// Add a goal
 router.post('/add', authenticateToken, async (req, res) => {
   const { description, target_date } = req.body;
   const userId = req.user.userId;
@@ -36,18 +32,13 @@ router.post('/add', authenticateToken, async (req, res) => {
 
   try {
     const pool = await getConnection();
-
     await pool.request()
       .input('userId', sql.Int, userId)
       .input('description', sql.VarChar(255), description)
       .input('target_date', sql.Date, target_date)
-      .query(`
-        INSERT INTO goals (userId, description, target_date)
-        VALUES (@userId, @description, @target_date)
-      `);
+      .execute('sp_AddGoal');
 
     await logActivity(userId, 'Goal Added', `Goal: ${description}`);
-
     res.status(201).json({ message: 'Goal added successfully' });
   } catch (err) {
     console.error(err);
@@ -55,7 +46,7 @@ router.post('/add', authenticateToken, async (req, res) => {
   }
 });
 
-// get all goals
+// Get all goals
 router.get('/', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
@@ -63,7 +54,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const pool = await getConnection();
     const result = await pool.request()
       .input('userId', sql.Int, userId)
-      .query(`SELECT * FROM goals WHERE userId = @userId ORDER BY target_date ASC`);
+      .execute('sp_GetAllGoals');
 
     res.json(result.recordset);
   } catch (err) {
@@ -72,7 +63,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// get goal by id
+// Get goal by ID
 router.get('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const goalId = req.params.id;
@@ -80,9 +71,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const pool = await getConnection();
     const result = await pool.request()
-      .input('id', sql.Int, goalId)
       .input('userId', sql.Int, userId)
-      .query(`SELECT * FROM goals WHERE id = @id AND userId = @userId`);
+      .input('id', sql.Int, goalId)
+      .execute('sp_GetGoalById');
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ message: 'Goal not found' });
@@ -95,7 +86,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//updating a goal by id
+// Update a goal by ID
 router.put('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const goalId = req.params.id;
@@ -103,27 +94,19 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
   try {
     const pool = await getConnection();
-
     const result = await pool.request()
-      .input('id', sql.Int, goalId)
       .input('userId', sql.Int, userId)
+      .input('id', sql.Int, goalId)
       .input('description', sql.VarChar(255), description)
       .input('target_date', sql.Date, target_date)
       .input('status', sql.VarChar(20), status || 'active')
-      .query(`
-        UPDATE goals
-        SET description = @description,
-            target_date = @target_date,
-            status = @status
-        WHERE id = @id AND userId = @userId
-      `);
+      .execute('sp_UpdateGoal');
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: 'Goal not found or unauthorized' });
     }
 
     await logActivity(userId, 'Goal Updated', `Goal ID ${goalId} updated`);
-
     res.json({ message: 'Goal updated successfully' });
   } catch (err) {
     console.error(err);
@@ -131,25 +114,23 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//deleting a goal by id
+// Delete a goal by ID
 router.delete('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const goalId = req.params.id;
 
   try {
     const pool = await getConnection();
-
     const result = await pool.request()
-      .input('id', sql.Int, goalId)
       .input('userId', sql.Int, userId)
-      .query(`DELETE FROM goals WHERE id = @id AND userId = @userId`);
+      .input('id', sql.Int, goalId)
+      .execute('sp_DeleteGoal');
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: 'Goal not found or unauthorized' });
     }
 
     await logActivity(userId, 'Goal Deleted', `Goal ID ${goalId} deleted`);
-
     res.json({ message: 'Goal deleted successfully' });
   } catch (err) {
     console.error(err);
