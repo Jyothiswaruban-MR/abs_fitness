@@ -9,37 +9,19 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const pool = await getConnection();
 
-    // Total workouts
-    const totalWorkoutsResult = await pool.request()
+    const result = await pool.request()
       .input('userId', sql.Int, userId)
-      .query('SELECT COUNT(*) AS totalWorkouts FROM workouts WHERE userId = @userId');
-    const totalWorkouts = totalWorkoutsResult.recordset[0].totalWorkouts;
+      .execute('sp_GetUserDashboard');
 
-    // Total calories burned
-    const totalCaloriesResult = await pool.request()
-      .input('userId', sql.Int, userId)
-      .query('SELECT SUM(calories) AS totalCalories FROM workouts WHERE userId = @userId');
-    const totalCalories = totalCaloriesResult.recordset[0].totalCalories || 0;
-
-    // Weekly progress for past 4 weeks (start dates + totals)
-    const weeklyProgressResult = await pool.request()
-      .input('userId', sql.Int, userId)
-      .query(`
-        SELECT 
-          DATEADD(WEEK, DATEDIFF(WEEK, 0, workout_date), 0) AS weekStart,
-          COUNT(*) AS workouts,
-          SUM(calories) AS calories
-        FROM workouts
-        WHERE userId = @userId
-          AND workout_date >= DATEADD(WEEK, -4, GETDATE())
-        GROUP BY DATEADD(WEEK, DATEDIFF(WEEK, 0, workout_date), 0)
-        ORDER BY weekStart ASC
-      `);
+    // Stored procedure returns multiple recordsets
+    const totalWorkouts = result.recordsets[0][0].totalWorkouts;
+    const totalCalories = result.recordsets[1][0].totalCalories;
+    const weeklyProgress = result.recordsets[2];
 
     res.json({
       totalWorkouts,
       totalCalories,
-      weeklyProgress: weeklyProgressResult.recordset
+      weeklyProgress
     });
 
   } catch (err) {

@@ -3,7 +3,6 @@ const { getConnection, sql } = require('../config');
 const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 
-// Reusable activity log function
 async function logActivity(userId, activityType, activityDescription) {
   try {
     const pool = await getConnection();
@@ -26,7 +25,7 @@ async function logActivity(userId, activityType, activityDescription) {
   }
 }
 
-// add workout
+// Add workout
 router.post('/add', authenticateToken, async (req, res) => {
   const { workoutType, duration, calories, notes, workout_date } = req.body;
   const userId = req.user.userId;
@@ -45,10 +44,7 @@ router.post('/add', authenticateToken, async (req, res) => {
       .input('calories', sql.Int, calories)
       .input('notes', sql.VarChar(255), notes || null)
       .input('workout_date', sql.Date, workout_date)
-      .query(`
-        INSERT INTO workouts (userId, workoutType, duration, calories, notes, workout_date)
-        VALUES (@userId, @workoutType, @duration, @calories, @notes, @workout_date)
-      `);
+      .execute('sp_AddWorkout');
 
     await logActivity(userId, 'Workout Added', `${workoutType} workout logged`);
 
@@ -59,7 +55,7 @@ router.post('/add', authenticateToken, async (req, res) => {
   }
 });
 
-// 📄 get all workouts
+// Get all workouts
 router.get('/', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
@@ -67,7 +63,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const pool = await getConnection();
     const result = await pool.request()
       .input('userId', sql.Int, userId)
-      .query(`SELECT * FROM workouts WHERE userId = @userId ORDER BY workout_date DESC`);
+      .execute('sp_GetAllWorkouts');
 
     res.json(result.recordset);
   } catch (err) {
@@ -76,7 +72,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// 🔍 get workout by id
+// Get workout by id
 router.get('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const workoutId = req.params.id;
@@ -86,7 +82,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const result = await pool.request()
       .input('id', sql.Int, workoutId)
       .input('userId', sql.Int, userId)
-      .query(`SELECT * FROM workouts WHERE id = @id AND userId = @userId`);
+      .execute('sp_GetWorkoutById');
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ message: 'Workout not found' });
@@ -99,7 +95,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// ✏️ update a workout by id
+// Update workout by id
 router.put('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const workoutId = req.params.id;
@@ -116,15 +112,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       .input('calories', sql.Int, calories)
       .input('notes', sql.VarChar(255), notes || null)
       .input('workout_date', sql.Date, workout_date)
-      .query(`
-        UPDATE workouts
-        SET workoutType = @workoutType,
-            duration = @duration,
-            calories = @calories,
-            notes = @notes,
-            workout_date = @workout_date
-        WHERE id = @id AND userId = @userId
-      `);
+      .execute('sp_UpdateWorkout');
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: 'Workout not found or unauthorized' });
@@ -139,7 +127,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//delete a workout by id
+// Delete workout by id
 router.delete('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const workoutId = req.params.id;
@@ -150,7 +138,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const result = await pool.request()
       .input('id', sql.Int, workoutId)
       .input('userId', sql.Int, userId)
-      .query(`DELETE FROM workouts WHERE id = @id AND userId = @userId`);
+      .execute('sp_DeleteWorkout');
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: 'Workout not found or unauthorized' });
