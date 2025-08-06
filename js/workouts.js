@@ -56,13 +56,46 @@ document.addEventListener("DOMContentLoaded", () => {
               <td>${workout.notes || ''}</td>
               <td>
                 <button onclick="deleteWorkout(${workout.id})">Delete</button>
+                <button onclick="editWorkout(${workout.id})">Update</button>
               </td>
             `;
             tableBody.appendChild(tr);
           });
         });
     }
-  
+    
+    window.editWorkout = function (id) {
+  fetch(`http://localhost:5000/workouts/${id}`, { headers })
+    .then(res => res.json())
+    .then(workout => {
+      document.getElementById("workoutType").value = workout.workoutType;
+      document.getElementById("duration").value = workout.duration;
+      document.getElementById("calories").value = workout.calories;
+      document.getElementById("workoutDate").value = workout.workout_date.split("T")[0];
+      document.getElementById("notes").value = workout.notes || '';
+
+      // Store workout id in form dataset for update mode
+      form.dataset.editId = id;
+    })
+    .catch(err => console.error("Fetch workout failed:", err));
+};
+  window.editWorkout = function (id) {
+  fetch(`http://localhost:5000/workouts/${id}`, { headers })
+    .then(res => res.json())
+    .then(workout => {
+      document.getElementById("workoutType").value = workout.workoutType;
+      document.getElementById("duration").value = workout.duration;
+      document.getElementById("calories").value = workout.calories;
+      document.getElementById("workoutDate").value = workout.workout_date.split("T")[0];
+      document.getElementById("notes").value = workout.notes || '';
+
+      // Store workout id in form dataset for update mode
+      form.dataset.editId = id;
+    })
+    .catch(err => console.error("Fetch workout failed:", err));
+};
+
+
     window.deleteWorkout = function (id) {
       if (confirm("Are you sure you want to delete this workout?")) {
         fetch(`http://localhost:5000/workouts/${id}`, {

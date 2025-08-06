@@ -17,11 +17,14 @@ router.get('/', authenticateToken, async (req, res) => {
     const totalWorkouts = result.recordsets[0][0].totalWorkouts;
     const totalCalories = result.recordsets[1][0].totalCalories;
     const weeklyProgress = result.recordsets[2];
+    const userInfo = result.recordsets[3][0];
 
     res.json({
       totalWorkouts,
       totalCalories,
-      weeklyProgress
+      weeklyProgress,
+      username: userInfo.username,
+      firstName: userInfo.first_name
     });
 
   } catch (err) {
