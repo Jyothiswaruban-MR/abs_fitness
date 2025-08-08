@@ -6,29 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/dashboard.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* Match card color and style */
-    .nav-buttons {
-      display: flex;
-      gap: 10px;
-      margin: 15px 0;
-    }
-
-    .nav-buttons button {
-      background-color: #00ffd5; /* Match highlight color */
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      color: #000;
-      transition: background-color 0.2s ease-in-out;
-    }
-
-    .nav-buttons button:hover {
-      background-color: #00c6a5;
-    }
-  </style>
 </head>
 <body>
 
@@ -49,7 +26,6 @@
       <div class="card" id="activeGoals">Active Goals: 0</div>
     </div>
 
-    <!-- New buttons section -->
     <div class="nav-buttons">
       <button onclick="window.location.href='workouts.html'">Workouts</button>
       <button onclick="window.location.href='goals.html'">Goals</button>
@@ -60,8 +36,11 @@
     </div>
 
     <div class="goals-section">
+      <h2>Current Goal</h2>
+      <div id="currentGoalContainer"></div>
+
       <h2>Upcoming Goals</h2>
-      <ul id="goalsList"></ul>
+      <div id="upcomingGoalsContainer"></div>
     </div>
 
     <div class="quote-section">

@@ -3,6 +3,7 @@ const { getConnection, sql } = require('../config');
 const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 
+// Activity Logger
 async function logActivity(userId, activityType, activityDescription) {
   try {
     const pool = await getConnection();
@@ -25,7 +26,7 @@ async function logActivity(userId, activityType, activityDescription) {
   }
 }
 
-// Add workout
+// Add Workout
 router.post('/add', authenticateToken, async (req, res) => {
   const { workoutType, duration, calories, notes, workout_date } = req.body;
   const userId = req.user.userId;
@@ -47,15 +48,15 @@ router.post('/add', authenticateToken, async (req, res) => {
       .execute('sp_AddWorkout');
 
     await logActivity(userId, 'Workout Added', `${workoutType} workout logged`);
-
     res.status(201).json({ message: 'Workout added successfully' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error while adding workout' });
   }
 });
 
-// Get all workouts
+// Get All Workouts
 router.get('/', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
@@ -72,7 +73,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Get workout by id
+// Get Workout by ID
 router.get('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const workoutId = req.params.id;
@@ -95,7 +96,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Update workout by id
+// Update Workout
 router.put('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const workoutId = req.params.id;
@@ -103,7 +104,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
   try {
     const pool = await getConnection();
-
     const result = await pool.request()
       .input('id', sql.Int, workoutId)
       .input('userId', sql.Int, userId)
@@ -119,22 +119,21 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     await logActivity(userId, 'Workout Updated', `Workout ID ${workoutId} updated`);
-
     res.json({ message: 'Workout updated successfully' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error updating workout' });
   }
 });
 
-// Delete workout by id
+// Delete Workout
 router.delete('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const workoutId = req.params.id;
 
   try {
     const pool = await getConnection();
-
     const result = await pool.request()
       .input('id', sql.Int, workoutId)
       .input('userId', sql.Int, userId)
@@ -145,8 +144,8 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 
     await logActivity(userId, 'Workout Deleted', `Workout ID ${workoutId} deleted`);
-
     res.json({ message: 'Workout deleted successfully' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error deleting workout' });

@@ -106,34 +106,41 @@ GO
 
 -- GOALS Stored Procedures
 
+-- Add Goal (status defaults to 'active')
 CREATE PROCEDURE sp_AddGoal
   @userId INT,
   @description VARCHAR(255),
   @target_date DATE
 AS
 BEGIN
-  INSERT INTO goals (userId, description, target_date)
-  VALUES (@userId, @description, @target_date);
+  INSERT INTO goals (userId, description, target_date, status)
+  VALUES (@userId, @description, @target_date, 'active');
 END
 GO
 
-CREATE PROCEDURE sp_GetGoals
+-- Get All Goals for a User (sorted by target date)
+CREATE PROCEDURE sp_GetAllGoals
   @userId INT
 AS
 BEGIN
-  SELECT * FROM goals WHERE userId = @userId ORDER BY target_date ASC;
+  SELECT * FROM goals
+  WHERE userId = @userId
+  ORDER BY target_date ASC;
 END
 GO
 
+-- Get Goal by ID
 CREATE PROCEDURE sp_GetGoalById
   @id INT,
   @userId INT
 AS
 BEGIN
-  SELECT * FROM goals WHERE id = @id AND userId = @userId;
+  SELECT * FROM goals
+  WHERE id = @id AND userId = @userId;
 END
 GO
 
+-- Update Goal by ID
 CREATE PROCEDURE sp_UpdateGoal
   @id INT,
   @userId INT,
@@ -150,12 +157,14 @@ BEGIN
 END
 GO
 
+-- Delete Goal by ID
 CREATE PROCEDURE sp_DeleteGoal
   @id INT,
   @userId INT
 AS
 BEGIN
-  DELETE FROM goals WHERE id = @id AND userId = @userId;
+  DELETE FROM goals
+  WHERE id = @id AND userId = @userId;
 END
 GO
 
@@ -202,7 +211,7 @@ BEGIN
 END
 GO
 
--- DASHBOARD Stored Procedure
+/* -- DASHBOARD Stored Procedure
 
 CREATE PROCEDURE sp_GetDashboardData
   @userId INT
@@ -228,5 +237,49 @@ BEGIN
     AND workout_date >= DATEADD(WEEK, -4, GETDATE())
   GROUP BY DATEADD(WEEK, DATEDIFF(WEEK, 0, workout_date), 0)
   ORDER BY weekStart ASC;
+END
+GO */
+
+-- DASHBOARD: Combined User Dashboard Procedure
+CREATE PROCEDURE sp_GetUserDashboard
+  @userId INT
+AS
+BEGIN
+  -- 1. Total workouts
+  SELECT COUNT(*) AS totalWorkouts
+  FROM workouts
+  WHERE userId = @userId;
+
+  -- 2. Total calories burned
+  SELECT ISNULL(SUM(calories), 0) AS totalCalories
+  FROM workouts
+  WHERE userId = @userId;
+
+  -- 3. Weekly progress
+  SELECT 
+    FORMAT(workout_date, 'yyyy-MM-dd') AS weekStart,
+    COUNT(*) AS workouts,
+    SUM(calories) AS calories
+  FROM workouts
+  WHERE userId = @userId
+    AND workout_date >= DATEADD(DAY, -7, GETDATE())
+  GROUP BY FORMAT(workout_date, 'yyyy-MM-dd')
+  ORDER BY weekStart;
+
+  -- 4. Active goals count
+  SELECT COUNT(*) AS activeGoals
+  FROM goals
+  WHERE userId = @userId AND ISNULL(status, 'active') = 'active';
+
+  -- 5. Basic user info
+  SELECT username, first_name
+  FROM users
+  WHERE id = @userId;
+
+  -- 6. Active goals (for listing current and upcoming)
+  SELECT id, description, target_date, status
+  FROM goals
+  WHERE userId = @userId AND ISNULL(status, 'active') = 'active'
+  ORDER BY target_date ASC;
 END
 GO

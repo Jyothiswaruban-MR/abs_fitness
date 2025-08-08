@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const editBtn = document.getElementById("editBtn");
     const saveBtn = document.getElementById("saveBtn");
   
-    // Disable form inputs initially
+    // Disable editable fields initially
     toggleForm(false);
   
-    // Fetch profile data
+    // Fetch user profile data
     fetch("http://localhost:5000/profile/me", { headers })
       .then(res => res.json())
       .then(data => {
@@ -37,19 +37,19 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Error loading profile:", err);
       });
   
+    // Enable editing
     editBtn.addEventListener("click", () => {
       toggleForm(true);
     });
   
+    // Save changes
     saveBtn.addEventListener("click", (e) => {
       e.preventDefault();
   
       const updatedData = {
-        firstName: document.getElementById("firstName").value,
-        lastName: document.getElementById("lastName").value,
-        age: document.getElementById("age").value,
-        phone: document.getElementById("phone").value,
-        gender: document.getElementById("gender").value
+        height: document.getElementById("height").value,
+        weight: document.getElementById("weight").value,
+        password: document.getElementById("password").value || undefined // optional update
       };
   
       fetch("http://localhost:5000/profile/update", {
@@ -59,22 +59,35 @@ document.addEventListener("DOMContentLoaded", () => {
       })
         .then(res => res.json())
         .then(data => {
-          alert(data.message || "Profile updated");
+          alert(data.message || "Profile updated successfully");
           toggleForm(false);
+          document.getElementById("password").value = ""; // Clear password field
         })
         .catch(err => {
           console.error("Update failed:", err);
+          alert("Failed to update profile.");
         });
     });
   
+    // Toggle between view/edit mode
     function toggleForm(enable) {
-      const fields = profileForm.querySelectorAll("input, select");
-      fields.forEach(field => {
-        if (["height", "weight", "email", "phone", "age", "gender", "firstName", "lastName"].includes(field.id)) {
-          field.disabled = !enable;
-        }
+      const editableIds = ["height", "weight", "password"];
+      editableIds.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.disabled = !enable;
       });
-      saveBtn.style.display = enable ? "block" : "none";
-      editBtn.style.display = enable ? "none" : "block";
+  
+      saveBtn.style.display = enable ? "inline-block" : "none";
+      editBtn.style.display = enable ? "inline-block" : "block";
     }
+  
+    // Navigation Buttons
+    document.getElementById("dashboardBtn").addEventListener("click", () => {
+      window.location.href = "dashboard.html";
+    });
+  
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    });
   });  

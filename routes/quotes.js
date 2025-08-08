@@ -5,11 +5,12 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const response = await fetch('https://api.adviceslip.com/advice');
-    const quotes = await response.json();
+    const data = await response.json();
 
-    res.json(quotes);
+    // Return only the quote text for cleaner frontend handling
+    res.json({ quote: data.slip?.advice || "Stay motivated!" });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching quote:", err);
     res.status(500).json({ message: 'Failed to fetch quotes' });
   }
 });

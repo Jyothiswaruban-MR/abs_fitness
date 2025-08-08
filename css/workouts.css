@@ -103,13 +103,19 @@ body {
     background-color: rgba(255, 255, 255, 0.05);
   }
   
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
   .actions button {
-    margin-right: 0.5rem;
-    padding: 0.3rem 0.7rem;
+    padding: 6px 12px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
+    font-weight: bold;
+    transition: background 0.3s ease;
   }
   
   .actions .edit {
@@ -117,9 +123,17 @@ body {
     color: #000;
   }
   
+  .actions .edit:hover {
+    background: #e6b800;
+  }
+  
   .actions .delete {
     background: #ff4d4d;
     color: #fff;
+  }
+  
+  .actions .delete:hover {
+    background: #e60000;
   }
   
   @media (max-width: 768px) {
@@ -144,5 +158,9 @@ body {
       content: attr(data-label);
       float: left;
       font-weight: bold;
+    }
+  
+    .actions {
+      justify-content: flex-end;
     }
   }  

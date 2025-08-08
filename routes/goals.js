@@ -3,6 +3,7 @@ const { getConnection, sql } = require('../config');
 const authenticateToken = require('../middleware/authMiddleware');
 const router = express.Router();
 
+// Utility to log user activity
 async function logActivity(userId, activityType, activityDescription) {
   try {
     const pool = await getConnection();
@@ -21,7 +22,7 @@ async function logActivity(userId, activityType, activityDescription) {
   }
 }
 
-// Add a goal
+// Add a new goal
 router.post('/add', authenticateToken, async (req, res) => {
   const { description, target_date } = req.body;
   const userId = req.user.userId;
@@ -46,7 +47,7 @@ router.post('/add', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all goals
+// Get all goals for user
 router.get('/', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
@@ -86,11 +87,15 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Update a goal by ID
+// Update goal by ID
 router.put('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const goalId = req.params.id;
   const { description, target_date, status } = req.body;
+
+  if (!description || !target_date || !status) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
 
   try {
     const pool = await getConnection();
@@ -99,7 +104,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       .input('id', sql.Int, goalId)
       .input('description', sql.VarChar(255), description)
       .input('target_date', sql.Date, target_date)
-      .input('status', sql.VarChar(20), status || 'active')
+      .input('status', sql.VarChar(20), status)
       .execute('sp_UpdateGoal');
 
     if (result.rowsAffected[0] === 0) {
@@ -114,7 +119,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Delete a goal by ID
+// Delete goal by ID
 router.delete('/:id', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const goalId = req.params.id;

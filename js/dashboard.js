@@ -21,13 +21,16 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("totalCalories").textContent = `Total Calories: ${data.totalCalories}`;
         document.getElementById("activeGoals").textContent = `Active Goals: ${data.activeGoals}`;
   
+        const days = data.weeklyProgress.map(item => item.day);
+        const calories = data.weeklyProgress.map(item => item.calories);
+  
         new Chart(document.getElementById("progressChart"), {
           type: "line",
           data: {
-            labels: data.progress.days,
+            labels: days,
             datasets: [{
               label: "Calories Burned",
-              data: data.progress.calories,
+              data: calories,
               fill: true,
               borderColor: "#00ffd5",
               backgroundColor: "rgba(0,255,213,0.2)",
@@ -44,17 +47,52 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Dashboard data fetch failed:", err);
       });
   
-    // Fetch Goals List
+    // Fetch and Display Goals: Current & Upcoming
     fetch("http://localhost:5000/goals", { headers })
       .then(res => res.json())
-      .then(data => {
-        const list = document.getElementById("goalsList");
-        list.innerHTML = "";
-        data.forEach(goal => {
-          const li = document.createElement("li");
-          li.textContent = `${goal.description} - ${goal.status}`;
-          list.appendChild(li);
-        });
+      .then(goals => {
+        const currentContainer = document.getElementById("currentGoalContainer");
+        const upcomingContainer = document.getElementById("upcomingGoalsContainer");
+  
+        currentContainer.innerHTML = "";
+        upcomingContainer.innerHTML = "";
+  
+        // Filter active goals and sort by date
+        const activeGoals = goals
+          .filter(goal => (goal.status || 'active') === 'active')
+          .sort((a, b) => new Date(a.target_date) - new Date(b.target_date));
+  
+        // Display current goal (first in sorted list)
+        if (activeGoals.length > 0) {
+          const current = activeGoals[0];
+          const div = document.createElement("div");
+          div.className = "goal-card";
+          div.innerHTML = `
+            <strong>${current.description}</strong><br/>
+            Target: ${new Date(current.target_date).toLocaleDateString()}<br/>
+            <button onclick="window.location.href='goals.html'">Update</button>
+          `;
+          currentContainer.appendChild(div);
+  
+          // Display the rest as upcoming
+          for (let i = 1; i < activeGoals.length; i++) {
+            const goal = activeGoals[i];
+            const div = document.createElement("div");
+            div.className = "goal-card";
+            div.innerHTML = `
+              <strong>${goal.description}</strong><br/>
+              Target: ${new Date(goal.target_date).toLocaleDateString()}<br/>
+              <button onclick="window.location.href='goals.html'">Update</button>
+            `;
+            upcomingContainer.appendChild(div);
+          }
+        } else {
+          currentContainer.textContent = "No active goals.";
+          upcomingContainer.textContent = "No upcoming goals.";
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch goals:", err);
       });
   
     // Fetch Quote
@@ -70,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "login.html";
     });
   
-    // Profile Icon Redirection
+    // Profile Redirect
     const profileIcon = document.getElementById("profileIcon");
     if (profileIcon) {
       profileIcon.addEventListener("click", () => {

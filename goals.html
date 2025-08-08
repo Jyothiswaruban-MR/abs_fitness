@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Goals | ABS Fitness</title>
-  <link rel="stylesheet" href="css/goals.css">
+  <link rel="stylesheet" href="css/goals.css" />
 </head>
 <body>
+
   <nav class="navbar">
     <div class="logo">ABS Fitness</div>
     <div class="nav-right">
@@ -16,10 +17,11 @@
   </nav>
 
   <div class="container">
-    <h2>Set Your Goal</h2>
+    <h2 id="formTitle">Set Your Goal</h2>
     <form id="goalForm">
       <input type="text" id="description" placeholder="Goal Description *" required />
       <input type="date" id="targetDate" required />
+      <input type="hidden" id="goalId" />
       <button type="submit">Save Goal</button>
     </form>
 
@@ -34,7 +36,7 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Goals will be loaded here -->
+        <!-- Goals will be loaded here dynamically -->
       </tbody>
     </table>
   </div>

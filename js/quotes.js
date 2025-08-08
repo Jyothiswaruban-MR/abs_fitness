@@ -18,7 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
       fetch("http://localhost:5000/quotes", { headers })
         .then(res => res.json())
         .then(data => {
-          quoteText.textContent = data.slip?.advice || "Stay positive and keep pushing!";
+          // Now simply read the 'quote' field from the backend
+          quoteText.textContent = data.quote || "Stay positive and keep pushing!";
         })
         .catch(err => {
           console.error("Failed to fetch quote:", err);
@@ -41,5 +42,4 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.removeItem("token");
       window.location.href = "login.html";
     });
-  });
-  
+  });  

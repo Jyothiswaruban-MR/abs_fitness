@@ -27,18 +27,38 @@ document.addEventListener("DOMContentLoaded", () => {
         notes: document.getElementById("notes").value
       };
   
-      fetch("http://localhost:5000/workouts/add", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(workoutData)
-      })
-        .then(res => res.json())
-        .then(data => {
-          alert(data.message);
-          form.reset();
-          loadWorkouts();
+      const editId = form.dataset.editId;
+  
+      if (editId) {
+        // Update existing workout
+        fetch(`http://localhost:5000/workouts/${editId}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(workoutData)
         })
-        .catch(err => console.error("Add workout failed:", err));
+          .then(res => res.json())
+          .then(data => {
+            alert(data.message);
+            form.reset();
+            delete form.dataset.editId; // Clear edit mode
+            loadWorkouts();
+          })
+          .catch(err => console.error("Update workout failed:", err));
+      } else {
+        // Add new workout
+        fetch("http://localhost:5000/workouts/add", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(workoutData)
+        })
+          .then(res => res.json())
+          .then(data => {
+            alert(data.message);
+            form.reset();
+            loadWorkouts();
+          })
+          .catch(err => console.error("Add workout failed:", err));
+      }
     });
   
     function loadWorkouts() {
@@ -54,48 +74,30 @@ document.addEventListener("DOMContentLoaded", () => {
               <td>${workout.duration} min</td>
               <td>${workout.calories}</td>
               <td>${workout.notes || ''}</td>
-              <td>
-                <button onclick="deleteWorkout(${workout.id})">Delete</button>
-                <button onclick="editWorkout(${workout.id})">Update</button>
+              <td class="actions">
+                <button class="edit" onclick="editWorkout(${workout.id})">Edit</button>
+                <button class="delete" onclick="deleteWorkout(${workout.id})">Delete</button>
               </td>
             `;
             tableBody.appendChild(tr);
           });
         });
     }
-    
+  
     window.editWorkout = function (id) {
-  fetch(`http://localhost:5000/workouts/${id}`, { headers })
-    .then(res => res.json())
-    .then(workout => {
-      document.getElementById("workoutType").value = workout.workoutType;
-      document.getElementById("duration").value = workout.duration;
-      document.getElementById("calories").value = workout.calories;
-      document.getElementById("workoutDate").value = workout.workout_date.split("T")[0];
-      document.getElementById("notes").value = workout.notes || '';
-
-      // Store workout id in form dataset for update mode
-      form.dataset.editId = id;
-    })
-    .catch(err => console.error("Fetch workout failed:", err));
-};
-  window.editWorkout = function (id) {
-  fetch(`http://localhost:5000/workouts/${id}`, { headers })
-    .then(res => res.json())
-    .then(workout => {
-      document.getElementById("workoutType").value = workout.workoutType;
-      document.getElementById("duration").value = workout.duration;
-      document.getElementById("calories").value = workout.calories;
-      document.getElementById("workoutDate").value = workout.workout_date.split("T")[0];
-      document.getElementById("notes").value = workout.notes || '';
-
-      // Store workout id in form dataset for update mode
-      form.dataset.editId = id;
-    })
-    .catch(err => console.error("Fetch workout failed:", err));
-};
-
-
+      fetch(`http://localhost:5000/workouts/${id}`, { headers })
+        .then(res => res.json())
+        .then(workout => {
+          document.getElementById("workoutType").value = workout.workoutType;
+          document.getElementById("duration").value = workout.duration;
+          document.getElementById("calories").value = workout.calories;
+          document.getElementById("workoutDate").value = workout.workout_date.split("T")[0];
+          document.getElementById("notes").value = workout.notes || '';
+          form.dataset.editId = id; // Mark form in edit mode
+        })
+        .catch(err => console.error("Fetch workout failed:", err));
+    };
+  
     window.deleteWorkout = function (id) {
       if (confirm("Are you sure you want to delete this workout?")) {
         fetch(`http://localhost:5000/workouts/${id}`, {

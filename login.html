@@ -3,39 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <title>Login | ABS Fitness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
   <div class="login-container">
-    <div class="form-box">
-      <h2>Welcome Back</h2>
-      <p class="subtitle">Login to your fitness dashboard</p>
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Login to your fitness dashboard</p>
 
-      <form id="loginForm">
-        <div class="form-group">
-          <input type="email" id="email" placeholder="Email" required autofocus>
-          <div id="emailError" class="error-msg">Please enter a valid email.</div>
-        </div>
+    <form id="loginForm">
+      <!-- Email Field -->
+      <div class="form-group">
+        <input type="email" id="email" placeholder="Email" required autofocus>
+        <div id="emailError" class="error-msg">Please enter a valid email.</div>
+      </div>
 
-        <div class="form-group">
+      <!-- Password Field with Eye Icon -->
+      <div class="form-group">
+        <div class="password-wrapper">
           <input type="password" id="password" placeholder="Password" required>
           <span id="togglePassword" class="toggle-password">👁️</span>
-          <div id="passwordError" class="error-msg">Password is required.</div>
         </div>
+        <div id="passwordError" class="error-msg">Password is required.</div>
+      </div>
 
-        <div class="forgot-link">
-          <a href="forgotpassword.html">Forgot Password?</a>
-        </div>
+      <!-- Forgot Password -->
+      <div class="forgot-link">
+        <a href="forgotpassword.html">Forgot Password?</a>
+      </div>
 
-        <button type="submit">Login</button>
-        <div id="loginError" class="error-msg"></div>
-      </form>
+      <!-- Login Button -->
+      <button type="submit">Login</button>
 
-      <p class="footer-link">Don't have an account?
-        <a href="register.html">Sign Up</a>
-      </p>
-    </div>
+      <!-- General Login Error -->
+      <div id="loginError" class="error-msg"></div>
+    </form>
+
+    <!-- Sign Up Link -->
+    <p class="footer-link">
+      Don't have an account?
+      <a href="register.html">Sign Up</a>
+    </p>
   </div>
 
   <script>
