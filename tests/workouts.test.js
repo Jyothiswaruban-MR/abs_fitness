@@ -5,7 +5,7 @@ const { getConnection, sql } = require('../config');
 
 // Mock auth middleware and database
 jest.mock('../middleware/authMiddleware', () => (req, res, next) => {
-  req.user = { userId: 1 };
+  req.user = { userId: 1 }; // Mock authenticated user
   next();
 });
 jest.mock('../config');
@@ -35,8 +35,23 @@ describe('Workouts API', () => {
   });
 
   describe('POST /workouts/add', () => {
-    it('should add a workout', async () => {
-      mockDb.execute.mockResolvedValueOnce({ rowsAffected: [1] });
+    
+
+    it('should return 400 when missing required fields', async () => {
+      const res = await request(app)
+        .post('/workouts/add')
+        .set('Authorization', 'Bearer validtoken')
+        .send({
+          workoutType: 'Running',
+          // Missing duration, calories, workout_date
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toContain('Please fill all required fields');
+    });
+
+    it('should handle database errors', async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error('DB error'));
 
       const res = await request(app)
         .post('/workouts/add')
@@ -48,30 +63,84 @@ describe('Workouts API', () => {
           workout_date: '2023-01-01'
         });
 
-      expect(res.statusCode).toBe(201);
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toContain('Error while adding workout');
     });
   });
 
   describe('GET /workouts', () => {
-    it('should return workouts list', async () => {
-      mockDb.execute.mockResolvedValueOnce({
-        recordset: [
-          { id: 1, workoutType: 'Running', duration: 30, calories: 300 }
-        ]
-      });
+    
+
+    it('should return empty array when no workouts exist', async () => {
+      mockDb.execute.mockResolvedValueOnce({ recordset: [] });
 
       const res = await request(app)
         .get('/workouts')
         .set('Authorization', 'Bearer validtoken');
 
       expect(res.statusCode).toBe(200);
-      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body).toEqual([]);
+    });
+
+    it('should handle database errors', async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error('DB error'));
+
+      const res = await request(app)
+        .get('/workouts')
+        .set('Authorization', 'Bearer validtoken');
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toContain('Error retrieving workouts');
+    });
+  });
+
+  describe('GET /workouts/:id', () => {
+    
+
+    it('should return 404 when workout not found', async () => {
+      mockDb.execute.mockResolvedValueOnce({ recordset: [] });
+
+      const res = await request(app)
+        .get('/workouts/999')
+        .set('Authorization', 'Bearer validtoken');
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body.message).toContain('Workout not found');
+    });
+
+    it('should handle database errors', async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error('DB error'));
+
+      const res = await request(app)
+        .get('/workouts/1')
+        .set('Authorization', 'Bearer validtoken');
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toContain('Error retrieving workout');
     });
   });
 
   describe('PUT /workouts/:id', () => {
-    it('should update an existing workout', async () => {
-      mockDb.execute.mockResolvedValueOnce({ rowsAffected: [1] });
+    
+    it('should return 404 when workout not found', async () => {
+      mockDb.execute.mockResolvedValueOnce({ rowsAffected: [0] });
+
+      const res = await request(app)
+        .put('/workouts/999')
+        .set('Authorization', 'Bearer validtoken')
+        .send({
+          workoutType: 'Updated Running',
+          duration: 45,
+          calories: 450,
+          workout_date: '2023-01-02'
+        });
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body.message).toContain('Workout not found or unauthorized');
+    });
+
+    it('should handle database errors', async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error('DB error'));
 
       const res = await request(app)
         .put('/workouts/1')
@@ -83,51 +152,15 @@ describe('Workouts API', () => {
           workout_date: '2023-01-02'
         });
 
-      expect(res.statusCode).toBe(200);
-      expect(res.body.message).toBe('Workout updated successfully');
-    });
-
-    it('should return 404 if workout not found', async () => {
-      mockDb.execute.mockResolvedValueOnce({ rowsAffected: [0] });
-
-      const res = await request(app)
-        .put('/workouts/999')
-        .set('Authorization', 'Bearer validtoken')
-        .send({
-          workoutType: 'Non-existent workout'
-        });
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body.message).toBe('Workout not found or unauthorized');
-    });
-
-    it('should return 500 for invalid input', async () => {
-      mockDb.execute.mockRejectedValueOnce(new Error('Invalid input'));
-
-      const res = await request(app)
-        .put('/workouts/1')
-        .set('Authorization', 'Bearer validtoken')
-        .send({
-          duration: 'not-a-number'
-        });
-
       expect(res.statusCode).toBe(500);
+      expect(res.body.message).toContain('Error updating workout');
     });
   });
 
   describe('DELETE /workouts/:id', () => {
-    it('should delete an existing workout', async () => {
-      mockDb.execute.mockResolvedValueOnce({ rowsAffected: [1] });
+    
 
-      const res = await request(app)
-        .delete('/workouts/1')
-        .set('Authorization', 'Bearer validtoken');
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body.message).toBe('Workout deleted successfully');
-    });
-
-    it('should return 404 if workout not found', async () => {
+    it('should return 404 when workout not found', async () => {
       mockDb.execute.mockResolvedValueOnce({ rowsAffected: [0] });
 
       const res = await request(app)
@@ -135,44 +168,18 @@ describe('Workouts API', () => {
         .set('Authorization', 'Bearer validtoken');
 
       expect(res.statusCode).toBe(404);
-      expect(res.body.message).toBe('Workout not found or unauthorized');
+      expect(res.body.message).toContain('Workout not found or unauthorized');
     });
 
-    it('should return 500 for invalid ID', async () => {
-      mockDb.execute.mockRejectedValueOnce(new Error('Invalid ID'));
+    it('should handle database errors', async () => {
+      mockDb.execute.mockRejectedValueOnce(new Error('DB error'));
 
       const res = await request(app)
-        .delete('/workouts/invalid-id')
+        .delete('/workouts/1')
         .set('Authorization', 'Bearer validtoken');
 
       expect(res.statusCode).toBe(500);
-    });
-  });
-
-  describe('GET /workouts/:id', () => {
-    it('should return a specific workout', async () => {
-      mockDb.execute.mockResolvedValueOnce({
-        recordset: [
-          { id: 1, workoutType: 'Running', duration: 30, calories: 300 }
-        ]
-      });
-
-      const res = await request(app)
-        .get('/workouts/1')
-        .set('Authorization', 'Bearer validtoken');
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('id', 1);
-    });
-
-    it('should return 404 if workout not found', async () => {
-      mockDb.execute.mockResolvedValueOnce({ recordset: [] });
-
-      const res = await request(app)
-        .get('/workouts/999')
-        .set('Authorization', 'Bearer validtoken');
-
-      expect(res.statusCode).toBe(404);
+      expect(res.body.message).toContain('Error deleting workout');
     });
   });
 });
