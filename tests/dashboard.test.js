@@ -1,50 +1,57 @@
 const request = require('supertest');
 const express = require('express');
-const dashboardRouter = require('../routes/dashboard'); // adjust path
-const { getConnection } = require('../config');
-const authenticateToken = require('../middleware/authMiddleware');
+const dashboardRouter = require('../routes/dashboard');
+const { getConnection, sql } = require('../config');
 
-jest.mock('../config');
+// Mock auth middleware and database
 jest.mock('../middleware/authMiddleware', () => (req, res, next) => {
   req.user = { userId: 1 };
   next();
 });
+jest.mock('../config');
 
 const app = express();
 app.use(express.json());
-app.use('/dashboard', dashboardRouter);
+app.use('/', dashboardRouter);
 
-const mockRequest = {
-  input: jest.fn().mockReturnThis(),
-  query: jest.fn(),
-};
+describe('Dashboard API', () => {
+  let mockDb;
 
-const mockPool = {
-  request: jest.fn(() => mockRequest),
-};
+  beforeEach(() => {
+    mockDb = {
+      request: jest.fn().mockReturnThis(),
+      input: jest.fn().mockReturnThis(),
+      execute: jest.fn()
+    };
+    getConnection.mockResolvedValue(mockDb);
+  });
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  getConnection.mockResolvedValue(mockPool);
-});
-
-describe('GET /dashboard', () => {
-  it('returns dashboard data', async () => {
-    // This stored procedure returns 3 resultsets, so mock accordingly:
-    mockRequest.query.mockResolvedValueOnce({ recordset: [{ totalWorkouts: 5 }] });
-    mockRequest.query.mockResolvedValueOnce({ recordset: [{ totalCalories: 2000 }] });
-    mockRequest.query.mockResolvedValueOnce({
-      recordset: [
-        { weekStart: '2025-07-07', workouts: 2, calories: 500 },
-        { weekStart: '2025-07-14', workouts: 3, calories: 700 },
-      ],
+  it('should return dashboard data', async () => {
+    mockDb.execute.mockResolvedValueOnce({
+      recordsets: [
+        [{ totalWorkouts: 5 }],
+        [{ totalCalories: 2500 }],
+        [{ day: 'Monday', calories: 500 }],
+        [{ username: 'johndoe', first_name: 'John' }]
+      ]
     });
 
-    const res = await request(app).get('/dashboard');
+    const res = await request(app)
+      .get('/')
+      .set('Authorization', 'Bearer validtoken');
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('totalWorkouts');
-    expect(res.body).toHaveProperty('totalCalories');
-    expect(res.body).toHaveProperty('weeklyProgress');
+    expect(res.body).toHaveProperty('totalWorkouts', 5);
+    expect(res.body).toHaveProperty('username', 'johndoe');
+  });
+
+  it('should handle errors', async () => {
+    mockDb.execute.mockRejectedValueOnce(new Error('DB error'));
+
+    const res = await request(app)
+      .get('/')
+      .set('Authorization', 'Bearer validtoken');
+
+    expect(res.statusCode).toBe(500);
   });
 });

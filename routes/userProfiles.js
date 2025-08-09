@@ -40,7 +40,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // UPDATE user profile (height, weight, gender, age + optional password)
-router.put('/', authenticateToken, async (req, res) => {
+router.put('/update', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const {
     age,

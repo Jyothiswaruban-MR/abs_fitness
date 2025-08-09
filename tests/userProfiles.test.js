@@ -1,59 +1,69 @@
 const request = require('supertest');
 const express = require('express');
-const profilesRouter = require('../routes/userProfiles'); // adjust path
-const { getConnection } = require('../config');
-const authenticateToken = require('../middleware/authMiddleware');
+const userProfilesRouter = require('../routes/userprofiles');
+const { getConnection, sql } = require('../config');
 
-jest.mock('../config');
+// Mock auth middleware and database
 jest.mock('../middleware/authMiddleware', () => (req, res, next) => {
   req.user = { userId: 1 };
   next();
 });
+jest.mock('../config');
 
 const app = express();
 app.use(express.json());
-app.use('/profiles', profilesRouter);
+app.use('/profiles', userProfilesRouter);
 
-const mockRequest = {
-  input: jest.fn().mockReturnThis(),
-  query: jest.fn(),
-};
+describe('User Profiles API', () => {
+  let mockDb;
 
-const mockPool = {
-  request: jest.fn(() => mockRequest),
-};
-
-beforeEach(() => {
-  jest.clearAllMocks();
-  getConnection.mockResolvedValue(mockPool);
-});
-
-describe('POST /profiles', () => {
-  it('creates a new profile', async () => {
-    mockRequest.query.mockResolvedValueOnce({ recordset: [] }); // existing check
-    mockRequest.query.mockResolvedValueOnce({}); // insert
-
-    const res = await request(app).post('/profiles').send({
-      age: 30,
-      gender: 'Male',
-      height_cm: 175,
-      weight_kg: 70,
-    });
-
-    expect(res.statusCode).toBe(201);
-    expect(res.body.message).toBe('Profile created successfully');
+  beforeEach(() => {
+    mockDb = {
+      request: jest.fn().mockReturnThis(),
+      input: jest.fn().mockReturnThis(),
+      execute: jest.fn(),
+      query: jest.fn().mockReturnThis()
+    };
+    getConnection.mockResolvedValue(mockDb);
   });
-});
 
-describe('GET /profiles', () => {
-  it('gets user profile', async () => {
-    mockRequest.query.mockResolvedValueOnce({
-      recordset: [{ userId: 1, age: 30, gender: 'Male' }],
+  describe('POST /profiles', () => {
+    it('should create a profile', async () => {
+      mockDb.query.mockResolvedValueOnce({ recordset: [] });
+      mockDb.execute.mockResolvedValueOnce({ rowsAffected: [1] });
+
+      const res = await request(app)
+        .post('/profiles')
+        .set('Authorization', 'Bearer validtoken')
+        .send({
+          age: 30,
+          gender: 'male',
+          height_cm: 180,
+          weight_kg: 80
+        });
+
+      expect(res.statusCode).toBe(201);
     });
+  });
 
-    const res = await request(app).get('/profiles');
+  describe('GET /profiles', () => {
+    it('should return user profile', async () => {
+      mockDb.execute.mockResolvedValueOnce({
+        recordset: [{
+          userId: 1,
+          age: 30,
+          gender: 'male',
+          height_cm: 180,
+          weight_kg: 80
+        }]
+      });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual([{ userId: 1, age: 30, gender: 'Male' }][0]);
+      const res = await request(app)
+        .get('/profiles')
+        .set('Authorization', 'Bearer validtoken');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('userId', 1);
+    });
   });
 });

@@ -8,40 +8,29 @@ router.get('/', authenticateToken, async (req, res) => {
 
   try {
     const pool = await getConnection();
-
     const result = await pool.request()
       .input('userId', sql.Int, userId)
       .execute('sp_GetUserDashboard');
 
-    const totalWorkouts = result.recordsets[0][0]?.totalWorkouts || 0;
-    const totalCalories = result.recordsets[1][0]?.totalCalories || 0;
-    const weeklyProgress = result.recordsets[2] || [];
-    const activeGoalsCount = result.recordsets[3][0]?.activeGoals || 0;
-    const userInfo = result.recordsets[4][0] || {};
-
-    // Fetch full list of active goals separately
-    const goalsResult = await pool.request()
-      .input('userId', sql.Int, userId)
-      .query(`
-        SELECT id, description, target_date, status
-        FROM goals
-        WHERE userId = @userId AND ISNULL(status, 'active') = 'active'
-        ORDER BY target_date ASC
-      `);
-
-    const progress = {
-      days: weeklyProgress.map(entry => new Date(entry.weekStart).toLocaleDateString()),
-      calories: weeklyProgress.map(entry => entry.calories || 0)
+    // Map results to expected format
+    const dashboardData = {
+      totalWorkouts: result.recordsets[0][0]?.totalWorkouts || 0,
+      totalCalories: result.recordsets[1][0]?.totalCalories || 0,
+      weeklyProgress: result.recordsets[2] || [], // Now matches day/calories format
+      activeGoals: result.recordsets[3][0]?.activeGoals || 0,
+      userInfo: result.recordsets[4][0] || {}
     };
 
     res.json({
-      totalWorkouts,
-      totalCalories,
-      activeGoals: activeGoalsCount,
-      progress,
-      username: userInfo.username,
-      firstName: userInfo.first_name,
-      goals: goalsResult.recordset  // Added this
+      totalWorkouts: dashboardData.totalWorkouts,
+      totalCalories: dashboardData.totalCalories,
+      activeGoals: dashboardData.activeGoals,
+      progress: {
+        days: dashboardData.weeklyProgress.map(entry => entry.day),
+        calories: dashboardData.weeklyProgress.map(entry => entry.calories || 0)
+      },
+      firstName: dashboardData.userInfo.first_name,
+      username: dashboardData.userInfo.username
     });
 
   } catch (err) {
